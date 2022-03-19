@@ -1,4 +1,4 @@
-namespace SmartStorage;
+namespace WebApp;
 
 public class WeatherForecast
 {

@@ -1,6 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartStorage", "SmartStorage\SmartStorage.csproj", "{7CDCC6FC-3541-44AF-957F-D2A7C3CDA950}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApp", "WebApp\WebApp.csproj", "{7CDCC6FC-3541-44AF-957F-D2A7C3CDA950}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "App", "App", "{EF2259CA-9DDC-47C4-8C0E-1EF24ECC524A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App.Domain", "App.Domain\App.Domain.csproj", "{5FD5961A-D316-46D4-B51F-721169F26592}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Base", "Base", "{71BD1521-94F6-4F45-833D-656ADD72556C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Base.Domain", "Base.Domain\Base.Domain.csproj", "{3E02AE3C-129E-4C79-9933-F4C2316547B3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Other", "Other", "{ABBB7B3F-B230-4C9A-84E4-570E6862761E}"
+	ProjectSection(SolutionItems) = preProject
+		..\README.md = ..\README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,5 +25,18 @@ Global
 		{7CDCC6FC-3541-44AF-957F-D2A7C3CDA950}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7CDCC6FC-3541-44AF-957F-D2A7C3CDA950}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7CDCC6FC-3541-44AF-957F-D2A7C3CDA950}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FD5961A-D316-46D4-B51F-721169F26592}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FD5961A-D316-46D4-B51F-721169F26592}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FD5961A-D316-46D4-B51F-721169F26592}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FD5961A-D316-46D4-B51F-721169F26592}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E02AE3C-129E-4C79-9933-F4C2316547B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E02AE3C-129E-4C79-9933-F4C2316547B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E02AE3C-129E-4C79-9933-F4C2316547B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E02AE3C-129E-4C79-9933-F4C2316547B3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7CDCC6FC-3541-44AF-957F-D2A7C3CDA950} = {EF2259CA-9DDC-47C4-8C0E-1EF24ECC524A}
+		{5FD5961A-D316-46D4-B51F-721169F26592} = {EF2259CA-9DDC-47C4-8C0E-1EF24ECC524A}
+		{3E02AE3C-129E-4C79-9933-F4C2316547B3} = {71BD1521-94F6-4F45-833D-656ADD72556C}
 	EndGlobalSection
 EndGlobal
