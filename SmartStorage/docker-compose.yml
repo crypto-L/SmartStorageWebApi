@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  smartstorage-postgres:
+    container_name: smartstorage-postgres
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    ports:
+      - "5961:5432"
+    volumes:
+      - smartstorage-postgres-volume:/var/lib/postgres/data
+  smartstorage-pgadmin:
+    container_name: smartstorage-pgadmin
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - smartstorage-pgadmin-volume:/var/lib/pgadmin
+volumes:
+  smartstorage-postgres-volume:
+  smartstorage-pgadmin-volume:
+    
+
+#  pgadmin:
+#    container_name: pgadmin4_container
+#    image: dpage/pgadmin4
+#    restart: always
+#    environment:
+#      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+#      PGADMIN_DEFAULT_PASSWORD: pgadmin
+#    ports:
+#      - "5050:80"
