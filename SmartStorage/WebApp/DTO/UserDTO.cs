@@ -1,13 +1,19 @@
+using System.Text.Json.Serialization;
 using App.Domain;
 
 namespace WebApp.DTO;
 
 public class UserDTO
 {
-    public string Id { get; set; }
+    public string? Id { get; set; }
     public string Nickname { get; set; }
     public string PasswordHash { get; set; }
     public Dictionary<string,string>? RootStoragesIdNameDictionary { get; set; }
+    
+    //needed for binding data from post request
+    [JsonConstructor]
+    public UserDTO(){}
+    
     public UserDTO(Guid id, string nickname, string passwordHash, Dictionary<string,string>? rootStoragesIdNameDictionary)
     {
         Id = id.ToString();
@@ -24,11 +30,11 @@ public class UserDTO
         
         var allStorages = entity.UserStorages;
         Dictionary<string, string>? rootStoragesIdNameDictionary = null;
-        if (allStorages != null)
+        if (allStorages != null && allStorages.Count > 0)
         {
+            rootStoragesIdNameDictionary = new Dictionary<string, string>();
             foreach (var storage in allStorages)
             {
-                rootStoragesIdNameDictionary = new Dictionary<string, string>();
                 //check if storage is root level storage
                 if (storage.ParentStorageId == null || storage.ParentStorageId == Guid.Empty)
                 {
