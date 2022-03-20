@@ -17,5 +17,5 @@ public class Storage : BaseEntity
     public Guid? ParentStorageId { get; set; }
     public Storage? ParentStorage { get; set; }
 
-    private ICollection<Storage>? SubStorages { get; set; }
+    public ICollection<Storage>? SubStorages { get; set; }
 }
