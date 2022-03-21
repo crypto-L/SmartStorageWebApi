@@ -74,7 +74,37 @@ public class UsersController : ControllerBase
         
         return Ok(UserDTO.ConvertEntity(userEntity));
     }
-    
-    
-    
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<UserDTO>> Delete(string id)
+    {
+        var userExists = await _context.Users.AnyAsync(u => u.Id.ToString() == id);
+        if (userExists)
+        {
+            var user = await _context.Users.FirstAsync(u => u.Id.ToString() == id);
+            var userDto = UserDTO.ConvertEntity(user);
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            return Ok(userDto);
+        }
+        return BadRequest($"User with id {id} does not exist.");
+    }
+
+    //NB! updates only nickname/password
+    [HttpPut]
+    public async Task<ActionResult<UserDTO>> Put(UserDTO user)
+    {
+        var userExists = await _context.Users.AnyAsync(u => u.Id.ToString() == user.Id);
+        if (userExists)
+        {
+            var userEntity = await _context.Users.FirstAsync(u => u.Id.ToString() == user.Id);
+            userEntity.Nickname = user.Nickname;
+            userEntity.PasswordHash = user.PasswordHash;
+            await _context.SaveChangesAsync();
+            var userDto = UserDTO.ConvertEntity(userEntity);
+            return Ok(userDto);
+        }
+        return BadRequest("Something goes wrong...");
+    }
+
 }

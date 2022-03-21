@@ -14,4 +14,15 @@ public class AppDbContext : DbContext
     {
         
     }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        
+        //enable cascade delete for related substorages
+        modelBuilder.Entity<Storage>()
+            .HasOne(s => s.ParentStorage)
+            .WithMany(st => st.SubStorages)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
 }

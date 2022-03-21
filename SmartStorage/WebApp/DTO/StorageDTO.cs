@@ -1,10 +1,11 @@
+using System.Text.Json.Serialization;
 using App.Domain;
 
 namespace WebApp.DTO;
 
 public class StorageDTO
 {
-    public string Id { get; set; } 
+    public string? Id { get; set; } 
     public string StorageName { get; set; }
     public string UserId { get; set; }
     public List<ItemDTO>? StorageItems { get; set; }
@@ -12,6 +13,9 @@ public class StorageDTO
     public string? ParentName { get; set; }
     public Dictionary<string, string>? SubStoragesIdNameDictionary { get; set; }
 
+    [JsonConstructor]
+    public StorageDTO(){}
+    
     public StorageDTO(Guid id, string storageName, Guid userId, Guid? parentStorageId, 
         string? parentName, List<ItemDTO>? storageItems, Dictionary<string, string>? subStoragesIdNameDictionary)
     {
