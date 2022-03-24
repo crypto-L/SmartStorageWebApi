@@ -10,6 +10,8 @@ public class AppDbContext : DbContext
     public DbSet<Storage> Storages { get; set; } = default!;
     public DbSet<User> Users { get; set; } = default!;
 
+    public DbSet<Token> Tokens { get; set; } = default!;
+
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
         

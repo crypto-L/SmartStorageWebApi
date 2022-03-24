@@ -18,6 +18,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\App.DAL\App.DAL.csproj" />
+      <ProjectReference Include="..\Helpers\Helpers.csproj" />
     </ItemGroup>
 
 </Project>

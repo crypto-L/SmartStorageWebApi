@@ -7,4 +7,6 @@ public class User : BaseEntity
     public string Nickname { get; set; }
     public string PasswordHash { get; set; }
     public ICollection<Storage>? UserStorages { get; set; }
+    
+    public Token? Token { get; set; }
 }
