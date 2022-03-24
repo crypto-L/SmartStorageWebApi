@@ -60,8 +60,8 @@ public class StoragesController : ControllerBase
         };
         if (storage.ParentId != null)
         {
-            var parenExist = await _context.Storages.AnyAsync(s => s.Id.ToString() == storage.ParentId);
-            if (parenExist)
+            var parentExist = await _context.Storages.AnyAsync(s => s.Id.ToString() == storage.ParentId);
+            if (parentExist)
             {
                 storageEntity.ParentStorageId = Guid.Parse(storage.ParentId);
             }
@@ -73,6 +73,23 @@ public class StoragesController : ControllerBase
         await _context.Storages.AddAsync(storageEntity);
         await _context.SaveChangesAsync();
         return StorageDTO.ConvertEntity(storageEntity);
+    }
+
+    //only changes storage name
+    [HttpPut("{id}")]
+    public async Task<ActionResult<StorageDTO>> Put(string id, StorageDTO storage)
+    {
+        var storageExist = await _context.Storages.AnyAsync(s => s.Id.ToString() == id);
+        if (storageExist)
+        {
+            var storageEntity = await _context.Storages.FirstAsync(s => s.Id.ToString() == id);
+            storageEntity.StorageName = storage.StorageName;
+            await _context.SaveChangesAsync();
+            var storageDto = StorageDTO.ConvertEntity(storageEntity);
+            return Ok(storageDto);
+        }
+
+        return BadRequest("Something goes wrong...");
     }
 
     [HttpDelete("{id}")]

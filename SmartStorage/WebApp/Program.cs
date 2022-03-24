@@ -8,11 +8,15 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("NpgsqlConnection");
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
+builder.Services.AddCors(options => { options.AddDefaultPolicy(
+    policyBuilder => policyBuilder.AllowAnyOrigin().AllowAnyHeader()
+    );
+});
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
 
 // ============================================
 var app = builder.Build();
@@ -25,7 +29,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-// app.UseRouting();
+
+app.UseRouting();
+
+app.UseCors();
+
 app.UseAuthorization();
 
 app.MapControllers();

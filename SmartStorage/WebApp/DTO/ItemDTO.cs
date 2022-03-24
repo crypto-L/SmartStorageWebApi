@@ -1,11 +1,12 @@
 using System;
+using System.Text.Json.Serialization;
 using App.Domain;
 
 namespace WebApp.DTO;
 
 public class ItemDTO
 {
-    public string Id { get; set; }
+    public string? Id { get; set; }
     
     public string StorageId { get; set; }
     public string Title { get; set; }
@@ -15,7 +16,9 @@ public class ItemDTO
     public int? WeightInGrams { get; set; }
     public int? Amount { get; set; }
     
-
+    [JsonConstructor]
+    public ItemDTO(){}
+    
     public ItemDTO(Guid id, Guid storageId, string title, string? serialNumber, byte[]? image, string? category,
         int? weight, int? amount)
     {

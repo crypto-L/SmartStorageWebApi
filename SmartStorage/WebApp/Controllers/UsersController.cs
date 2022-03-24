@@ -91,13 +91,13 @@ public class UsersController : ControllerBase
     }
 
     //NB! updates only nickname/password
-    [HttpPut]
-    public async Task<ActionResult<UserDTO>> Put(UserDTO user)
+    [HttpPut("{id}")]
+    public async Task<ActionResult<UserDTO>> Put(string id, UserDTO user)
     {
-        var userExists = await _context.Users.AnyAsync(u => u.Id.ToString() == user.Id);
+        var userExists = await _context.Users.AnyAsync(u => u.Id.ToString() == id);
         if (userExists)
         {
-            var userEntity = await _context.Users.FirstAsync(u => u.Id.ToString() == user.Id);
+            var userEntity = await _context.Users.FirstAsync(u => u.Id.ToString() == id);
             userEntity.Nickname = user.Nickname;
             userEntity.PasswordHash = user.PasswordHash;
             await _context.SaveChangesAsync();
