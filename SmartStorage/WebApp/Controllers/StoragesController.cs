@@ -20,6 +20,14 @@ public class StoragesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<StorageDTO>>> Get()
     {
+        var header = Request.Headers;
+        var token = ExtractTokenFromHeaders(header);
+        var isTokenValid = await IsTokenValid(token);
+        Console.WriteLine($"Token: {token.Token}");
+        Console.WriteLine($"User: {token.UserId}");
+        Console.WriteLine(isTokenValid.ToString());
+        //TODO: get all root or substorages (using parentStorageId)
+        
         var storages = await _context.Storages
             .Include(s => s.Items)
             .ToListAsync();
@@ -104,7 +112,30 @@ public class StoragesController : ControllerBase
             await _context.SaveChangesAsync();
             return Ok(storageDto);
         }
-
+        
         return BadRequest($"Storage with id {id} does not exist.");
+    }
+
+    private static TokenDTO ExtractTokenFromHeaders(IHeaderDictionary headers)
+    {
+        headers.TryGetValue("userId", out var userId);
+        headers.TryGetValue("token", out var tokenString);
+        var tokenDto = new TokenDTO(userId, tokenString);
+        return tokenDto;
+    }
+
+    private async Task<bool> IsTokenValid(TokenDTO token)
+    {
+        if (token.Token ==  null|| token.UserId == null)
+        {
+            return false;
+        }
+
+        return await _context.Users
+            .Include(t => t.Token)
+            .AnyAsync
+            (u => u.Id.ToString() == token.UserId 
+                  && u.Token != null
+                  && u.Token.TokenString == token.Token);
     }
 }

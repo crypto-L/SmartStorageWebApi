@@ -49,4 +49,31 @@ public class LoginController : ControllerBase
         }
         return BadRequest("Incorrect nickname or password.");
     }
+
+    [HttpPost]
+    [Route("[action]")]
+    public async Task<ActionResult<bool>> IsAdmin(TokenDTO token)
+    {
+        var adminExists = await _context.Admins
+            .AnyAsync(a => a.Id.ToString() == token.UserId);
+        if (!adminExists)
+        {
+            return false;
+        }
+
+        var adminEntity = await _context.Admins
+            .Include(t => t.Token)
+            .FirstAsync(a => a.Id.ToString() == token.Token);
+
+        var adminEntityToken = adminEntity.Token;
+        
+        if (adminEntity.Id.ToString() == token.UserId 
+            && adminEntityToken != null
+            && adminEntityToken.TokenString == token.Token)
+        {
+            return true;
+        }
+
+        return false;
+    }
 }
