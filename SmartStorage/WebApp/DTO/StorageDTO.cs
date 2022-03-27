@@ -23,7 +23,8 @@ public class StorageDTO
         StorageName = storageName;
         UserId = userId.ToString();
         StorageItems = storageItems;
-        ParentId = parentStorageId.ToString();
+        
+        ParentId = parentStorageId != null ? parentStorageId.ToString() : null;
         ParentName = parentName;
         SubStoragesIdNameDictionary = subStoragesIdNameDictionary;
     }

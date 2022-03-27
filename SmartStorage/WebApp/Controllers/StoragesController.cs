@@ -17,43 +17,56 @@ public class StoragesController : ControllerBase
         _context = context;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<StorageDTO>>> Get()
-    {
-        var header = Request.Headers;
-        var token = ExtractTokenFromHeaders(header);
-        var isTokenValid = await IsTokenValid(token);
-        Console.WriteLine($"Token: {token.Token}");
-        Console.WriteLine($"User: {token.UserId}");
-        Console.WriteLine(isTokenValid.ToString());
-        //TODO: get all root or substorages (using parentStorageId)
-        
-        var storages = await _context.Storages
-            .Include(s => s.Items)
-            .ToListAsync();
-        var storageDtos = new List<StorageDTO>();
-        foreach (var storage in storages)
-        {
-            var storageDto = StorageDTO.ConvertEntity(storage);
-            storageDtos.Add(storageDto);
-        }
-        return storageDtos;
-    }
-    
     [HttpGet("{id}")]
     public async Task<ActionResult<StorageDTO>> Get(string id)
     {
-        var storage = await _context.Storages
-            .Where(s => s.Id.ToString() == id)
-            .Include(p => p.ParentStorage)
-            .Include(i => i.Items)
-            .Include(st => st.SubStorages)
-            .FirstOrDefaultAsync();
-        if (storage == null)
+        var token = ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await IsTokenValid(token);
+        if (isTokenValid)
         {
-            return NotFound($"Storage with id {id} does not exist.");
+            var storage = await _context.Storages
+                .Include(st => st.ParentStorage)
+                .FirstOrDefaultAsync(s => s.UserId.ToString() == token.UserId
+                                 && s.Id.ToString() == id);
+            return storage != null
+                ? StorageDTO.ConvertEntity(storage)
+                : NotFound("Storage with id {id} does not exist.");
         }
-        return StorageDTO.ConvertEntity(storage);
+        return BadRequest("You have no rights.");
+    }
+    
+    [HttpGet]
+    [Route("[action]/{rootStorageId}")]
+    public async Task<ActionResult<List<StorageDTO>>> GetAllStorages(string rootStorageId)
+    {
+        var token = ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await IsTokenValid(token);
+
+        if (isTokenValid)
+        {
+            List<Storage> storages;
+            
+            //for initial page loading
+            if (rootStorageId == "0")
+            {
+                storages = await _context.Storages
+                    .Where(st => st.UserId.ToString() == token.UserId 
+                                 && st.ParentStorageId == null)
+                    .Include(sb => sb.SubStorages)
+                    .ToListAsync();
+                return ConvertStorageEntitiesToDTO(storages);
+            }
+            //for concrete storage
+            storages = await _context.Storages
+                .Where(st => st.UserId.ToString() == token.UserId
+                             && st.ParentStorageId.ToString() == rootStorageId)
+                .Include(i => i.Items)
+                .Include(sb => sb.SubStorages)
+                .ToListAsync();
+            return ConvertStorageEntitiesToDTO(storages);
+        }
+
+        return BadRequest("You have no rights.");
     }
 
     // can create only empty storage/substorage related to some user
@@ -61,26 +74,33 @@ public class StoragesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<StorageDTO>> Post(StorageDTO storage)
     {
-        var storageEntity = new Storage()
+        var token = ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await IsTokenValid(token);
+        if (isTokenValid)
         {
-            UserId = Guid.Parse(storage.UserId),
-            StorageName = storage.StorageName
-        };
-        if (storage.ParentId != null)
-        {
-            var parentExist = await _context.Storages.AnyAsync(s => s.Id.ToString() == storage.ParentId);
-            if (parentExist)
+            var storageEntity = new Storage()
             {
-                storageEntity.ParentStorageId = Guid.Parse(storage.ParentId);
-            }
-            else
+                UserId = Guid.Parse(storage.UserId),
+                StorageName = storage.StorageName
+            };
+            if (storage.ParentId != null)
             {
-                return BadRequest($"Parent storage with id {storage.ParentId} does not exist.");
+                var parentExist = await _context.Storages.AnyAsync(s => s.Id.ToString() == storage.ParentId);
+                if (parentExist)
+                {
+                    storageEntity.ParentStorageId = Guid.Parse(storage.ParentId);
+                }
+                else
+                {
+                    return BadRequest($"Parent storage with id {storage.ParentId} does not exist.");
+                }
             }
+            await _context.Storages.AddAsync(storageEntity);
+            await _context.SaveChangesAsync();
+            return StorageDTO.ConvertEntity(storageEntity);
         }
-        await _context.Storages.AddAsync(storageEntity);
-        await _context.SaveChangesAsync();
-        return StorageDTO.ConvertEntity(storageEntity);
+
+        return BadRequest("You have no rights.");
     }
 
     //only changes storage name
@@ -137,5 +157,10 @@ public class StoragesController : ControllerBase
             (u => u.Id.ToString() == token.UserId 
                   && u.Token != null
                   && u.Token.TokenString == token.Token);
+    }
+
+    private static List<StorageDTO> ConvertStorageEntitiesToDTO(IEnumerable<Storage> storages)
+    {
+        return storages.Select(StorageDTO.ConvertEntity).ToList();
     }
 }
