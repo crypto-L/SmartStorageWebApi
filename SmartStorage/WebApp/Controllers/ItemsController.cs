@@ -3,6 +3,7 @@ using App.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.DTO;
+using WebApp.Helpers;
 
 namespace WebApp.Controllers;
 
@@ -54,38 +55,71 @@ public class ItemsController : Controller
     [HttpPost]
     public async Task<ActionResult<ItemDTO>> Post(ItemDTO item)
     {
-        var storageExists = await _context.Storages.AnyAsync(s => s.Id.ToString() == item.StorageId);
-        if (storageExists)
+        var token = HeadersHelper.ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await HeadersHelper.IsTokenValid(token, _context);
+        if (!isTokenValid) return BadRequest("You have no rights.");
+        
+        var storageExists = await _context.Storages
+            .AnyAsync(s => s.Id.ToString() == item.StorageId 
+                           && s.UserId.ToString() == token.UserId);
+        if (!storageExists) return BadRequest($"Storage with id {item.StorageId} does not exist. Can't save item.");
+        
+        var itemEntity = new Item()
         {
-            var itemEntity = new Item()
-            {
-                StorageId = Guid.Parse(item.StorageId),
-                Title = item.Title,
-                SerialNumber = item.SerialNumber,
-                Image = item.Image,
-                Category = item.Category,
-                WeightInGrams = item.WeightInGrams,
-                Amount = item.Amount
-            };
-            await _context.Items.AddAsync(itemEntity);
-            await _context.SaveChangesAsync();
-            return ItemDTO.ConvertEntity(itemEntity);
-        }
-        return BadRequest($"Storage with id {item.StorageId} does not exist. Can't save item.");
+            StorageId = Guid.Parse(item.StorageId),
+            Title = item.Title,
+            SerialNumber = item.SerialNumber,
+            Image = item.Image,
+            Category = item.Category,
+            WeightInGrams = item.WeightInGrams,
+            Amount = item.Amount
+        };
+        await _context.Items.AddAsync(itemEntity);
+        await _context.SaveChangesAsync();
+        return ItemDTO.ConvertEntity(itemEntity);
     }
 
-    [HttpDelete("{id}")]
-    public async Task<ActionResult<ItemDTO>> Delete(string id)
+    [HttpPost]
+    [Route("[action]")]
+    public async Task<ActionResult<string>> Delete(ItemDTO itemDto)
     {
-        var itemExists = await _context.Items.AnyAsync(i => i.Id.ToString() == id);
-        if (itemExists)
-        {
-            var item = await _context.Items.FirstAsync(i => i.Id.ToString() == id);
-            var itemDto = ItemDTO.ConvertEntity(item);
-            _context.Items.Remove(item);
-            await _context.SaveChangesAsync();
-            return Ok(itemDto);
-        }
-        return BadRequest($"Can't find item with id {id}.");
+        var token = HeadersHelper.ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await HeadersHelper.IsTokenValid(token, _context);
+        if (!isTokenValid) return BadRequest("You have no rights.");
+        
+        var itemEntity = await _context.Items
+            .FirstOrDefaultAsync(i => i.Id.ToString() == itemDto.Id 
+                                      && i.StorageId.ToString() == itemDto.StorageId);
+        if (itemEntity == null) return BadRequest($"Can't find item with id {itemDto.Id}.");
+        
+        _context.Items.Remove(itemEntity);
+        await _context.SaveChangesAsync();
+        
+        return Ok($"Item {itemDto.Id} deleted.");
+    }
+
+    [HttpPut]
+    public async Task<ActionResult<ItemDTO>> Put(ItemDTO itemDto)
+    {
+        var token = HeadersHelper.ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await HeadersHelper.IsTokenValid(token, _context);
+        if (!isTokenValid) return BadRequest("You have no rights.");
+
+        var itemEntity = await _context.Items
+            .FirstOrDefaultAsync(i => i.Id.ToString() == itemDto.Id
+                                      && i.StorageId.ToString() == itemDto.StorageId);
+        
+        if (itemEntity == null) return BadRequest($"Can't find item with id {itemDto.Id}");
+        
+        itemEntity.Title = itemDto.Title;
+        itemEntity.SerialNumber = itemDto.SerialNumber;
+        itemEntity.Image = itemDto.Image;
+        itemEntity.Category = itemDto.Category;
+        itemEntity.WeightInGrams = itemDto.WeightInGrams;
+        itemEntity.Amount = itemDto.Amount;
+
+        await _context.SaveChangesAsync();
+        return ItemDTO.ConvertEntity(itemEntity);
+        
     }
 }

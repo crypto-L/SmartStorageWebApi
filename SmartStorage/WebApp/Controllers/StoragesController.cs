@@ -3,6 +3,7 @@ using App.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.DTO;
+using WebApp.Helpers;
 
 namespace WebApp.Controllers;
 
@@ -20,12 +21,14 @@ public class StoragesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<StorageDTO>> Get(string id)
     {
-        var token = ExtractTokenFromHeaders(Request.Headers);
-        var isTokenValid = await IsTokenValid(token);
+        var token = HeadersHelper.ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await HeadersHelper.IsTokenValid(token, _context);
+        
         if (isTokenValid)
         {
             var storage = await _context.Storages
                 .Include(st => st.ParentStorage)
+                .Include(i => i.Items)
                 .FirstOrDefaultAsync(s => s.UserId.ToString() == token.UserId
                                  && s.Id.ToString() == id);
             return storage != null
@@ -39,8 +42,8 @@ public class StoragesController : ControllerBase
     [Route("[action]/{rootStorageId}")]
     public async Task<ActionResult<List<StorageDTO>>> GetAllStorages(string rootStorageId)
     {
-        var token = ExtractTokenFromHeaders(Request.Headers);
-        var isTokenValid = await IsTokenValid(token);
+        var token = HeadersHelper.ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await HeadersHelper.IsTokenValid(token, _context);
 
         if (isTokenValid)
         {
@@ -74,33 +77,31 @@ public class StoragesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<StorageDTO>> Post(StorageDTO storage)
     {
-        var token = ExtractTokenFromHeaders(Request.Headers);
-        var isTokenValid = await IsTokenValid(token);
-        if (isTokenValid)
+        var token = HeadersHelper.ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await HeadersHelper.IsTokenValid(token, _context);
+        if (!isTokenValid) return BadRequest("You have no rights.");
+        
+        var storageEntity = new Storage()
         {
-            var storageEntity = new Storage()
+            UserId = Guid.Parse(storage.UserId),
+            StorageName = storage.StorageName
+        };
+        if (storage.ParentId != null)
+        {
+            var parentExist = await _context.Storages.AnyAsync(s => s.Id.ToString() == storage.ParentId);
+            if (parentExist)
             {
-                UserId = Guid.Parse(storage.UserId),
-                StorageName = storage.StorageName
-            };
-            if (storage.ParentId != null)
-            {
-                var parentExist = await _context.Storages.AnyAsync(s => s.Id.ToString() == storage.ParentId);
-                if (parentExist)
-                {
-                    storageEntity.ParentStorageId = Guid.Parse(storage.ParentId);
-                }
-                else
-                {
-                    return BadRequest($"Parent storage with id {storage.ParentId} does not exist.");
-                }
+                storageEntity.ParentStorageId = Guid.Parse(storage.ParentId);
             }
-            await _context.Storages.AddAsync(storageEntity);
-            await _context.SaveChangesAsync();
-            return StorageDTO.ConvertEntity(storageEntity);
+            else
+            {
+                return BadRequest($"Parent storage with id {storage.ParentId} does not exist.");
+            }
         }
+        await _context.Storages.AddAsync(storageEntity);
+        await _context.SaveChangesAsync();
+        return StorageDTO.ConvertEntity(storageEntity);
 
-        return BadRequest("You have no rights.");
     }
 
     //only changes storage name
@@ -135,30 +136,7 @@ public class StoragesController : ControllerBase
         
         return BadRequest($"Storage with id {id} does not exist.");
     }
-
-    private static TokenDTO ExtractTokenFromHeaders(IHeaderDictionary headers)
-    {
-        headers.TryGetValue("userId", out var userId);
-        headers.TryGetValue("token", out var tokenString);
-        var tokenDto = new TokenDTO(userId, tokenString);
-        return tokenDto;
-    }
-
-    private async Task<bool> IsTokenValid(TokenDTO token)
-    {
-        if (token.Token ==  null|| token.UserId == null)
-        {
-            return false;
-        }
-
-        return await _context.Users
-            .Include(t => t.Token)
-            .AnyAsync
-            (u => u.Id.ToString() == token.UserId 
-                  && u.Token != null
-                  && u.Token.TokenString == token.Token);
-    }
-
+    
     private static List<StorageDTO> ConvertStorageEntitiesToDTO(IEnumerable<Storage> storages)
     {
         return storages.Select(StorageDTO.ConvertEntity).ToList();

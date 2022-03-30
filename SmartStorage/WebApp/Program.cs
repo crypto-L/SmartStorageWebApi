@@ -9,7 +9,7 @@ var connectionString = builder.Configuration.GetConnectionString("NpgsqlConnecti
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
 builder.Services.AddCors(options => { options.AddDefaultPolicy(
-    policyBuilder => policyBuilder.AllowAnyOrigin().AllowAnyHeader()
+    policyBuilder => policyBuilder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()
     );
 });
 
