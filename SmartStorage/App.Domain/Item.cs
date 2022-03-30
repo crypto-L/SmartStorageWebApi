@@ -19,6 +19,9 @@ public class Item : BaseEntity
     public int? WeightInGrams { get; set; }
     public int? Amount { get; set; }
     
+    public Guid UserId { get; set; }
+    public User? User { get; set; }
+    
     public Guid StorageId { get; set; }
     public Storage? Storage { get; set; }
 

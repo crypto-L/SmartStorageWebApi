@@ -19,6 +19,7 @@
     <ItemGroup>
       <ProjectReference Include="..\App.DAL\App.DAL.csproj" />
       <ProjectReference Include="..\Helpers\Helpers.csproj" />
+      <ProjectReference Include="..\QueryParameters\QueryParameters.csproj" />
     </ItemGroup>
 
 </Project>

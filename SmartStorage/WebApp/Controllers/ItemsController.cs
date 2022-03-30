@@ -2,6 +2,7 @@ using App.DAL;
 using App.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using QueryParameters;
 using WebApp.DTO;
 using WebApp.Helpers;
 
@@ -27,6 +28,37 @@ public class ItemsController : Controller
             return NotFound($"Storage with id {id} does not exist.");
         }
         return ItemDTO.ConvertEntity(item);
+    }
+
+    [HttpGet]
+    [Route("[action]")]
+    public async Task<ActionResult<IEnumerable<ItemDTO>>> GetAll([FromQuery] ItemQueryParameters filter)
+    {
+        var token = HeadersHelper.ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await HeadersHelper.IsTokenValid(token, _context);
+        if (!isTokenValid) return BadRequest("You have no rights.");
+        
+        // if (!filter.ValidAmountRange || !filter.ValidWeightRange)
+        // {
+        //     return NotFound("The minimum value must be less than the maximum.");
+        // }
+        
+        var titleFilter = filter.Title ?? "";
+        var serialNumberFilter = filter.SerialNumber ?? "";
+        var categoryFilter = filter.Category ?? "";
+        //mb causes wrong filtering behaviour. amount = null, filters -1...99999 => ?
+        var weightMinFilter = filter.MinWeight ?? -1;
+        var weightMaxFilter = filter.MaxWeight ?? int.MaxValue;
+        var amountMinFilter = filter.MinAmount ?? -1;
+        var amountMaxFilter = filter.MaxAmount ?? int.MaxValue;
+
+        var items = await _context.Items
+            .Where(i => i.UserId.ToString() == token.UserId
+            && i.Title.Contains(titleFilter)
+            && i.SerialNumber.Contains(serialNumberFilter))
+            .ToListAsync();
+        
+        return ConvertItemsEntitiesToDTO(items);;
     }
 
     [HttpGet]
@@ -67,6 +99,7 @@ public class ItemsController : Controller
         var itemEntity = new Item()
         {
             StorageId = Guid.Parse(item.StorageId),
+            UserId = Guid.Parse(token.UserId),
             Title = item.Title,
             SerialNumber = item.SerialNumber,
             Image = item.Image,
@@ -121,5 +154,10 @@ public class ItemsController : Controller
         await _context.SaveChangesAsync();
         return ItemDTO.ConvertEntity(itemEntity);
         
+    }
+    
+    private static List<ItemDTO> ConvertItemsEntitiesToDTO(IEnumerable<Item> items)
+    {
+        return items.Select(ItemDTO.ConvertEntity).ToList();
     }
 }
