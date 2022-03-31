@@ -38,10 +38,10 @@ public class ItemsController : Controller
         var isTokenValid = await HeadersHelper.IsTokenValid(token, _context);
         if (!isTokenValid) return BadRequest("You have no rights.");
         
-        // if (!filter.ValidAmountRange || !filter.ValidWeightRange)
-        // {
-        //     return NotFound("The minimum value must be less than the maximum.");
-        // }
+        if (!filter.ValidAmountRange() || !filter.ValidWeightRange())
+        {
+            return NotFound("The minimum value must be less than the maximum.");
+        }
         
         var titleFilter = filter.Title ?? "";
         var serialNumberFilter = filter.SerialNumber ?? "";
@@ -55,7 +55,10 @@ public class ItemsController : Controller
         var items = await _context.Items
             .Where(i => i.UserId.ToString() == token.UserId
             && i.Title.Contains(titleFilter)
-            && i.SerialNumber.Contains(serialNumberFilter))
+            && i.SerialNumber.Contains(serialNumberFilter)
+            && i.Category.Contains(categoryFilter)
+            && i.WeightInGrams >= weightMinFilter && i.WeightInGrams <= weightMaxFilter
+            && i.Amount >= amountMinFilter && i.Amount <= amountMaxFilter)
             .ToListAsync();
         
         return ConvertItemsEntitiesToDTO(items);;
@@ -104,8 +107,8 @@ public class ItemsController : Controller
             SerialNumber = item.SerialNumber,
             Image = item.Image,
             Category = item.Category,
-            WeightInGrams = item.WeightInGrams,
-            Amount = item.Amount
+            WeightInGrams = item.WeightInGrams ?? 0,
+            Amount = item.Amount ?? 0
         };
         await _context.Items.AddAsync(itemEntity);
         await _context.SaveChangesAsync();

@@ -12,7 +12,31 @@ public class ItemQueryParameters
     public int? MinAmount { get; set; }
     public int? MaxAmount { get; set; }
     
-    public bool ValidWeightRange => MaxWeight > MinWeight;
-    public bool ValidAmountRange => MaxAmount > MinAmount;
-    
+    public bool ValidWeightRange()
+    {
+        if (MaxWeight == null && MinWeight == null)
+        {
+            return true;
+        }
+
+        if (MaxWeight == null || MinWeight == null)
+        {
+            return true;
+        }
+        return MaxWeight > MinWeight;
+    }
+
+    public bool ValidAmountRange()
+    {
+        if (MaxAmount == null && MinAmount == null)
+        {
+            return true;
+        }
+
+        if (MaxAmount == null || MinAmount == null)
+        {
+            return true;
+        }
+        return MaxAmount > MinAmount;
+    }
 }

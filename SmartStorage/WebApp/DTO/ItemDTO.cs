@@ -28,6 +28,8 @@ public class ItemDTO
         SerialNumber = serialNumber;
         Image = image;
         Category = category;
+        weight ??= 0;
+        amount ??= 0;
         WeightInGrams = weight;
         Amount = amount;
     }
