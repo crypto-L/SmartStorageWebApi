@@ -20,7 +20,16 @@ public class HeadersHelper
                   && u.Token != null
                   && u.Token.TokenString == token.Token);
     }
-    
+
+    public static async Task<bool> IsAdminTokenValid(TokenDTO token, AppDbContext context)
+    {
+        return await context.Admins
+            .Include(t => t.Token)
+            .AnyAsync(a => a.Id.ToString() == token.UserId
+                           && a.Token != null
+                           && a.Token.TokenString == token.Token);
+    }
+
     public static TokenDTO ExtractTokenFromHeaders(IHeaderDictionary headers)
     {
         headers.TryGetValue("userId", out var userId);

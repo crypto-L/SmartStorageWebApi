@@ -7,7 +7,7 @@ public class UserDTO
 {
     public string? Id { get; set; }
     public string Nickname { get; set; }
-    public string PasswordHash { get; set; }
+    public string? PasswordHash { get; set; }
     public Dictionary<string,string>? RootStoragesIdNameDictionary { get; set; }
     
     //needed for binding data from post request
@@ -20,6 +20,12 @@ public class UserDTO
         Nickname = nickname;
         PasswordHash = passwordHash;
         RootStoragesIdNameDictionary = rootStoragesIdNameDictionary;
+    }
+
+    public UserDTO(Guid id, string nickname)
+    {
+        Id = id.ToString();
+        Nickname = nickname;
     }
 
     public static UserDTO ConvertEntity(User entity)
@@ -44,7 +50,14 @@ public class UserDTO
                 }
             }
         }
-
         return new UserDTO(id, nickname, passwordHash, rootStoragesIdNameDictionary);
+    }
+
+    public static UserDTO ConvertEntityWithoutPassword(User entity)
+    {
+        var id = entity.Id;
+        var nickname = entity.Nickname;
+
+        return new UserDTO(id, nickname);
     }
 }

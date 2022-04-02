@@ -3,6 +3,7 @@ using App.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.DTO;
+using WebApp.Helpers;
 
 namespace WebApp.Controllers;
 
@@ -21,40 +22,72 @@ public class UsersController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<UserDTO>>> Get()
     {
-        var users = await _context.Users
-            .Include(u => u.UserStorages)
-            .ToListAsync();
-        
-        var usersDtos = new List<UserDTO>();
-        foreach (var user in users)
-        {
-            var userDto = UserDTO.ConvertEntity(user);
-            usersDtos.Add(userDto);
-        }
-        return usersDtos;
+        var token = HeadersHelper.ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await HeadersHelper.IsAdminTokenValid(token, _context);
+        if (!isTokenValid) return BadRequest("You have no rights.");
+
+        var users = await _context.Users.ToListAsync();
+
+        return users.Select(UserDTO.ConvertEntityWithoutPassword).ToList();
     }
 
     //GET api/users/"guid-string"
     [HttpGet("{id}")]
     public async Task<ActionResult<UserDTO>> Get(string id)
     {
+        var token = HeadersHelper.ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await HeadersHelper.IsAdminTokenValid(token, _context);
+        if (!isTokenValid) return BadRequest("You have no rights.");
+        
         var user = await _context.Users
             .Where(u => u.Id.ToString() == id)
-            .Include(s => s.UserStorages)
-                .Where(t => t.UserStorages != null)
             .FirstOrDefaultAsync();
         
         if (user == null)
         {
             return NotFound($"User with id {id} does not exist.");
         }
-        // await _context.Entry(user)
-        //     .Collection(u => u.UserStorages)
-        //     .Query()
-        //         .FirstOrDefaultAsync();
-        return Ok(UserDTO.ConvertEntity(user));
+        return Ok(UserDTO.ConvertEntityWithoutPassword(user));
     }
 
+    [HttpGet]
+    [Route("[action]/{id}")]
+    public async Task<ActionResult<int>> GetUserItemsCount(string id)
+    {
+        var token = HeadersHelper.ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await HeadersHelper.IsAdminTokenValid(token, _context);
+        if (!isTokenValid) return BadRequest("You have no rights.");
+
+        var itemsAmount = await _context.Items.CountAsync(u => u.UserId.ToString() == id);
+        return itemsAmount;
+    }
+    
+    [HttpGet]
+    [Route("[action]/{id}")]
+    public async Task<ActionResult<int>> GetUserStoragesCount(string id)
+    {
+        var token = HeadersHelper.ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await HeadersHelper.IsAdminTokenValid(token, _context);
+        if (!isTokenValid) return NotFound("You have no rights.");
+
+        var storagesAmount = await _context.Storages.CountAsync(u => u.UserId.ToString() == id);
+        return storagesAmount;
+    }
+    
+    [HttpGet]
+    [Route("[action]/{id}")]
+    public async Task<ActionResult<int>> GetUserRootStoragesCount(string id)
+    {
+        var token = HeadersHelper.ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await HeadersHelper.IsAdminTokenValid(token, _context);
+        if (!isTokenValid) return NotFound("You have no rights.");
+
+        var storagesAmount = await _context.Storages
+            .CountAsync(u => u.UserId.ToString() == id
+            && u.ParentStorageId == null);
+        return storagesAmount;
+    }
+    
     [HttpPost]
     public async Task<ActionResult<UserDTO>> Post(UserDTO user)
     {
@@ -73,6 +106,27 @@ public class UsersController : ControllerBase
         await _context.SaveChangesAsync();
         
         return Ok(UserDTO.ConvertEntity(userEntity));
+    }
+
+    [HttpGet]
+    [Route("[action]/{id}")]
+    public async Task<ActionResult<StorageDTO>> GetStorageWithMaxItems(string id)
+    {
+        var token = HeadersHelper.ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await HeadersHelper.IsAdminTokenValid(token, _context);
+        if (!isTokenValid) return NotFound("You have no rights.");
+
+        var storage = await _context.Storages
+            .Include(i => i.Items)
+            .Where(u => u.UserId.ToString() == id)
+            .OrderByDescending(i => i.Items.Count)
+            .FirstOrDefaultAsync();
+        if (storage == null)
+        {
+            return null!;
+        }
+        return StorageDTO.ConvertEntity(storage);
+
     }
 
     [HttpDelete("{id}")]
