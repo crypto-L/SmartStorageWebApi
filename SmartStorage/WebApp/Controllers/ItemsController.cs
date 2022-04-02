@@ -22,7 +22,14 @@ public class ItemsController : Controller
     [HttpGet("{id}")]
     public async Task<ActionResult<ItemDTO>> Get(string id)
     {
-        var item = await _context.Items.Where(i => i.Id.ToString() == id).FirstOrDefaultAsync();
+        var token = HeadersHelper.ExtractTokenFromHeaders(Request.Headers);
+        var isTokenValid = await HeadersHelper.IsTokenValid(token, _context);
+        if (!isTokenValid) return BadRequest("You have no rights.");
+        
+        var item = await _context.Items
+            .Where(i => i.UserId.ToString() == token.UserId 
+                        && i.Id.ToString() == id)
+            .FirstOrDefaultAsync();
         if (item == null)
         {
             return NotFound($"Storage with id {id} does not exist.");
@@ -46,7 +53,6 @@ public class ItemsController : Controller
         var titleFilter = filter.Title ?? "";
         var serialNumberFilter = filter.SerialNumber ?? "";
         var categoryFilter = filter.Category ?? "";
-        //mb causes wrong filtering behaviour. amount = null, filters -1...99999 => ?
         var weightMinFilter = filter.MinWeight ?? -1;
         var weightMaxFilter = filter.MaxWeight ?? int.MaxValue;
         var amountMinFilter = filter.MinAmount ?? -1;
@@ -63,30 +69,7 @@ public class ItemsController : Controller
         
         return ConvertItemsEntitiesToDTO(items);;
     }
-
-    [HttpGet]
-    [Route("[action]/{storageId}")]
-    public async Task<ActionResult<IEnumerable<ItemDTO>>> GetStorageItems(string storageId)
-    {
-        var storageExists = await _context.Storages.AnyAsync(s => s.Id.ToString() == storageId);
-        List<ItemDTO> items;
-        if (storageExists)
-        {
-            items = new List<ItemDTO>();
-            var storage = await _context.Storages
-                .Where(s => s.Id.ToString() == storageId)
-                .Include(i => i.Items).FirstOrDefaultAsync();
-            
-            foreach (var item in storage.Items)
-            {
-                var itemDto = ItemDTO.ConvertEntity(item);
-                items.Add(itemDto);
-            }
-            return items;
-        }
-        return NotFound($"Storage with id {storageId} does not exist.");
-    }
-
+    
     [HttpPost]
     public async Task<ActionResult<ItemDTO>> Post(ItemDTO item)
     {
