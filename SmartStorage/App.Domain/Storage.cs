@@ -5,8 +5,7 @@ namespace App.Domain;
 
 public class Storage : BaseEntity
 {
-    [MaxLength(32)]
-    public string StorageName { get; set; }
+    [MaxLength(32)] public string StorageName { get; set; } = default!;
     
     public Guid UserId { get; set; }
     public User? User { get; set; }

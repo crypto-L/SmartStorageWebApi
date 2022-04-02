@@ -5,8 +5,7 @@ namespace App.Domain;
 
 public class Item : BaseEntity
 {
-    [MaxLength(32)]
-    public string Title { get; set; }
+    [MaxLength(32)] public string Title { get; set; } = default!;
     
     [MaxLength(32)]
     public string? SerialNumber { get; set; }

@@ -4,7 +4,7 @@ namespace App.Domain;
 
 public class Token : BaseEntity
 {
-    public string TokenString { get; set; }
+    public string TokenString { get; set; } = default!;
     
     public Guid? UserId { get; set; }
     public User? User { get; set; }
