@@ -26,5 +26,12 @@ public class AppDbContext : DbContext
             .HasOne(s => s.ParentStorage)
             .WithMany(st => st.SubStorages)
             .OnDelete(DeleteBehavior.Cascade);
+        
+        modelBuilder.Entity<Admin>().HasData(new Admin()
+        {
+            Id = Guid.NewGuid(),
+            Nickname = "admin", 
+            PasswordHash = "admin"
+        });
     }
 }
