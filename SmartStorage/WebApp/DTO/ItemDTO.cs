@@ -11,7 +11,7 @@ public class ItemDTO
     public string StorageId { get; set; }
     public string Title { get; set; }
     public string? SerialNumber { get; set; }
-    public byte[]? Image { get; set; }
+    public string? Image { get; set; }
     public string? Category { get; set; }
     public int? WeightInGrams { get; set; }
     public int? Amount { get; set; }
@@ -19,7 +19,7 @@ public class ItemDTO
     [JsonConstructor]
     public ItemDTO(){}
     
-    public ItemDTO(Guid id, Guid storageId, string title, string? serialNumber, byte[]? image, string? category,
+    public ItemDTO(Guid id, Guid storageId, string title, string? serialNumber, string? image, string? category,
         int? weight, int? amount)
     {
         Id = id.ToString();
@@ -47,7 +47,14 @@ public class ItemDTO
         var storageId = entity.StorageId;
         var title = entity.Title;
         var serialNumber = entity.SerialNumber;
-        var image = entity.Image;
+
+        var imageBytes = entity.Image;
+        string? image = null;
+        if (imageBytes != null)
+        {
+            image = Convert.ToBase64String(imageBytes);
+        }
+        
         var category = entity.Category;
         var weight = entity.WeightInGrams;
         var amount = entity.Amount;

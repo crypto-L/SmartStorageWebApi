@@ -82,13 +82,19 @@ public class ItemsController : Controller
                            && s.UserId.ToString() == token.UserId);
         if (!storageExists) return BadRequest($"Storage with id {item.StorageId} does not exist. Can't save item.");
         
+        byte[]? imageBytes = null;
+        if (item.Image != null)
+        {
+            imageBytes = Convert.FromBase64String(item.Image);
+        }
+        
         var itemEntity = new Item()
         {
             StorageId = Guid.Parse(item.StorageId),
             UserId = Guid.Parse(token.UserId),
             Title = item.Title,
             SerialNumber = item.SerialNumber,
-            Image = item.Image,
+            Image = imageBytes,
             Category = item.Category,
             WeightInGrams = item.WeightInGrams ?? 0,
             Amount = item.Amount ?? 0
@@ -129,10 +135,15 @@ public class ItemsController : Controller
                                       && i.StorageId.ToString() == itemDto.StorageId);
         
         if (itemEntity == null) return BadRequest($"Can't find item with id {itemDto.Id}");
-        
+
+        byte[]? imageBytes = null;
+        if (itemDto.Image != null)
+        {
+            imageBytes = Convert.FromBase64String(itemDto.Image);
+        }
         itemEntity.Title = itemDto.Title;
         itemEntity.SerialNumber = itemDto.SerialNumber;
-        itemEntity.Image = itemDto.Image;
+        itemEntity.Image = imageBytes;
         itemEntity.Category = itemDto.Category;
         itemEntity.WeightInGrams = itemDto.WeightInGrams;
         itemEntity.Amount = itemDto.Amount;
